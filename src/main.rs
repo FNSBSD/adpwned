@@ -15,14 +15,14 @@ use std::io::{BufRead, BufReader, Seek, SeekFrom};
 /// optimized, and specialized to this specific purpose by myself.
 fn find_hash<R: BufRead + Seek>(reader: &mut R, hash: &str) -> Option<usize> {
     let mut left = 0;
-    let mut right = reader.seek(SeekFrom::End(0)).unwrap() as usize;
+    let mut right = reader.seek(SeekFrom::End(0)).unwrap();
 
     let target = hash.to_string();
     let mut line = String::new();
 
     while left <= right {
         let mid = left + (right - left) / 2;
-        reader.seek(SeekFrom::Start(mid as u64)).unwrap();
+        reader.seek(SeekFrom::Start(mid)).unwrap();
         reader.read_line(&mut line).unwrap();
         line.clear();
         reader.read_line(&mut line).unwrap();
