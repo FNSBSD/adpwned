@@ -41,15 +41,18 @@ fn find_hash<R: BufRead + Seek>(reader: &mut R, hash: &str) -> Option<usize> {
 
 
 fn main() {
-    let file = File::open("../pwned-passwords-ntlm-ordered-by-hash-v8.txt").expect("Unable to open file");
+    let hashes = File::open("../hash.csv").expect("Unable to open hashes file");
+    let hashreader = BufReader::new(hashes);
+
+    let file = File::open("../pwned-passwords-ntlm-ordered-by-hash-v8.txt").expect("Unable to open pwned passwords file");
     let mut reader = BufReader::new(file);
 
-    let foundit = find_hash(&mut reader, "FFFFFFBB9CF58E60AE819BE9908AE298");
-    println!("Did we find it? {}", foundit.unwrap_or(0));
+    for (user, pwned) in hashreader.lines().flatten().filter_map(|line| {
+        // let upper = line.to_ascii_uppercase();
+        let split: Vec<_> = line.split_whitespace().collect();
 
-    let foundit = find_hash(&mut reader, "FFFFFFAE407410119333ADA141BBF082");
-    println!("Did we find it? {}", foundit.unwrap_or(0));
-
-    let foundit = find_hash(&mut reader, "FFFFFFAE407410119333ADA141BBF083");
-    println!("Did we find it? {}", foundit.unwrap_or(0));
+        Some((split[1].to_string(), find_hash(&mut reader, split[2].to_ascii_uppercase().as_str())?))
+    }) {
+        println!("Pwned! {user}'s password has been seen {pwned} times!");
+    }
 }
