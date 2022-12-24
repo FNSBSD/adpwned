@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{BufRead, BufReader, Seek, SeekFrom};
+use std::io::{BufRead, BufReader, Seek, SeekFrom, BufWriter, Write};
 
 mod consts;
 
@@ -56,11 +56,22 @@ fn find_hash<R: BufRead + Seek>(reader: &mut R, hash: &str) -> Option<usize> {
 
 
 fn main() {
+    let start = std::time::Instant::now();
+
     let hashes = File::open("../hash.csv").expect("Unable to open hashes file");
     let hashreader = BufReader::new(hashes);
 
     let file = File::open("../pwned-passwords-ntlm-ordered-by-hash-v8.txt").expect("Unable to open pwned passwords file");
     let mut reader = BufReader::new(file);
+
+    let outfile = File::create("pwned.csv").expect("Unable to created output file");
+    let mut writer = BufWriter::new(outfile);
+
+    writeln!(&mut writer, "RID\tUser\tuserAccountControl\tPwned").expect("Failed to write to file");
+
+    let mut users = 0;
+    let mut active_users = 0;
+    let mut pwned_users = 0;
 
     for (user, pwned) in hashreader.lines().flatten().filter_map(|line| {
         // let upper = line.to_ascii_uppercase();
@@ -73,16 +84,28 @@ fn main() {
             uac: split[3].parse().expect("Failed to parse userAccountControl: {line}"),
         };
 
+        users += 1;
+
         if user.is_active() {
+            active_users += 1;
             Some(user)
         } else {
             None
         }
     }).filter_map(|user| {
         let pwned = find_hash(&mut reader, user.password.as_str())?;
+        pwned_users += 1;
         Some((user, pwned))
     })
     {
-        println!("Pwned! {}'s password has been seen {pwned} times!", user.username);
+        writeln!(&mut writer, "{}\t{}\t{}\t{}", user.rid, user.username, user.uac, pwned).expect("Failed to write to file");
     }
+
+    writer.flush().expect("Failed to finish writing");
+
+    let elapsed = start.elapsed();
+    let minutes = elapsed.as_secs() / 60;
+    let seconds = elapsed.as_secs_f32() - (minutes * 60) as f32;
+    println!("Finished in {minutes} minutes {seconds:.2} seconds");
+    println!("{users} users; {active_users} active users; {pwned_users} pwned users");
 }
