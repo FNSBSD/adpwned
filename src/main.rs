@@ -1,6 +1,21 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader, Seek, SeekFrom};
 
+mod consts;
+
+struct User {
+    rid: usize,
+    username: String,
+    password: String,
+    uac: u32,
+}
+
+impl User {
+    fn is_active(&self) -> bool {
+        self.uac & consts::UAC_ACCOUNT_DISABLE == 0
+    }
+}
+
 /// Find `hash` in a file of "pwned" password hashes
 ///
 /// This function performs a binary search to perform the search in `O(log(n))` complexity,
@@ -50,9 +65,24 @@ fn main() {
     for (user, pwned) in hashreader.lines().flatten().filter_map(|line| {
         // let upper = line.to_ascii_uppercase();
         let split: Vec<_> = line.split_whitespace().collect();
+        
+        let user = User {
+            rid: split[0].parse().expect("Failed to parse RID: {line}"),
+            username: split[1].to_string(),
+            password: split[2].to_ascii_uppercase(),
+            uac: split[3].parse().expect("Failed to parse userAccountControl: {line}"),
+        };
 
-        Some((split[1].to_string(), find_hash(&mut reader, split[2].to_ascii_uppercase().as_str())?))
-    }) {
-        println!("Pwned! {user}'s password has been seen {pwned} times!");
+        if user.is_active() {
+            Some(user)
+        } else {
+            None
+        }
+    }).filter_map(|user| {
+        let pwned = find_hash(&mut reader, user.password.as_str())?;
+        Some((user, pwned))
+    })
+    {
+        println!("Pwned! {}'s password has been seen {pwned} times!", user.username);
     }
 }
