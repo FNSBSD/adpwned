@@ -1,13 +1,13 @@
 #![allow(dead_code)]
 
 // Flags and their values are from http://www.selfadsi.org/ads-attributes/user-userAccountControl.htm
-pub(crate) const UAC_ACCOUNT_DISABLE: u32 = 2 ;
-pub(crate) const UAC_HOMEDIR_REQUIRED: u32 = 8 ;
+pub(crate) const UAC_ACCOUNT_DISABLE: u32 = 2;
+pub(crate) const UAC_HOMEDIR_REQUIRED: u32 = 8;
 pub(crate) const UAC_LOCKOUT: u32 = 16;
 pub(crate) const UAC_PASSWD_NOTREQD: u32 = 32;
 pub(crate) const UAC_PASSWD_CANT_CHANGE: u32 = 64;
-pub(crate) const UAC_ENCRYPTED_TEXT_PASSWORD_ALLOWED: u32 = 128 ;
-pub(crate) const UAC_NORMAL_ACCOUNT: u32 = 512 ;
+pub(crate) const UAC_ENCRYPTED_TEXT_PASSWORD_ALLOWED: u32 = 128;
+pub(crate) const UAC_NORMAL_ACCOUNT: u32 = 512;
 pub(crate) const UAC_INTERDOMAIN_TRUST_ACCOUNT: u32 = 2048;
 pub(crate) const UAC_WORKSTATION_TRUST_ACCOUNT: u32 = 4096;
 pub(crate) const UAC_SERVER_TRUST_ACCOUNT: u32 = 8192;
