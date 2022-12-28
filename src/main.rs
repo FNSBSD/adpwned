@@ -1,7 +1,10 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Seek, SeekFrom, Write};
 
+use clap::Parser;
+
 mod consts;
+mod cli;
 
 /// Simple data structure matching Mimikatz's `dcsync` output with the `/csv` switch
 struct Account {
@@ -116,15 +119,26 @@ fn jump_search<R: BufRead + Seek>(reader: &mut R, hash: &str) -> (String, usize)
 fn main() {
     let start = std::time::Instant::now();
 
+    let args = cli::Args::parse();
+
     // The hashes file is expected to be whitespace-delineated and contain (at least) 4 columns:
     // RID  AccountName    HashedPassword  userAccountControl
     // This matches the output of Mimikatz's `dcsync` with the `/csv` option
-    let hashes = File::open("../hash.csv").expect("Unable to open hashes file");
-    let hashreader = BufReader::new(hashes);
+    let accounts_file = File::open(args.accounts).expect("Unable to open hashes file");
+    let accounts_reader = BufReader::new(accounts_file);
+
+    // Pwned passwords file, containing lines in the format `<hash>:<count>`
+    let passwords_file = File::open(args.passwords)
+        .expect("Unable to open pwned passwords file");
+    let mut passwords_reader = BufReader::new(passwords_file);
+
+    // Output CSV file
+    let outfile = File::create(args.outfile).expect("Unable to created output file");
+    let mut writer = BufWriter::new(outfile);
 
     // Read our hashes file and create `Account`s from each of the active accounts in the file
     let mut total_accounts = 0;
-    let mut accounts: Vec<_> = hashreader
+    let mut accounts: Vec<_> = accounts_reader
         .lines()
         .filter_map(|line| {
             let line = line.ok()?;
@@ -152,17 +166,8 @@ fn main() {
     accounts.sort_unstable_by(|a, b| a.password.cmp(&b.password));
     let active_accounts = accounts.len();
 
-    // Pwned passwords file, containing lines in the format `<hash>:<count>`
-    let file = File::open("../pwned-passwords-ntlm-ordered-by-hash-v8.txt")
-        .expect("Unable to open pwned passwords file");
-    let mut reader = BufReader::new(file);
-
-    // Output CSV file
-    let outfile = File::create("pwned.csv").expect("Unable to created output file");
-    let mut writer = BufWriter::new(outfile);
-
     // Write column headers to our output file
-    writeln!(&mut writer, "RID\tUser\tuserAccountControl\tPwned").expect("Failed to write to file");
+    writeln!(&mut writer, "RID\tName\tuserAccountControl\tPwned").expect("Failed to write to file");
 
     let mut pwned_accounts = 0;
 
@@ -180,7 +185,7 @@ fn main() {
 
             // Search for this account's password hash
             // Note the returned hash may not be the same one we're looking for, indicating it was not found
-            (last_hash, last_pwned) = jump_search(&mut reader, account.password.as_str());
+            (last_hash, last_pwned) = jump_search(&mut passwords_reader, account.password.as_str());
 
             // Check if the returned hash is actually the one we're looking for
             if account.password == last_hash {
