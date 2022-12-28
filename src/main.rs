@@ -13,10 +13,10 @@ struct User {
 /// Use a jump search to progressively search through the file for sorted hashes
 ///
 /// Based on the algorithm described at https://www.geeksforgeeks.org/jump-search/
-fn jump_search<R: BufRead + Seek>(reader: &mut R, hash: &str) -> Option<usize> {
+fn jump_search<R: BufRead + Seek>(reader: &mut R, hash: &str) -> (String, usize) {
     let start = reader.stream_position().unwrap();
     let n = reader.seek(SeekFrom::End(0)).unwrap();
-    let step = ((n as f32).sqrt() as u64).max(1);
+    let step = ((n as f32).sqrt() as u64).max(1) as i64;
 
     let mut line = String::new();
 
@@ -24,18 +24,18 @@ fn jump_search<R: BufRead + Seek>(reader: &mut R, hash: &str) -> Option<usize> {
 
     loop {
         if reader.read_line(&mut line).unwrap() == 0 {
-            return None; // Reached the end of the file without finding our target
+            return ("".to_string(), 0); // Reached the end of the file without finding our target
         }
 
         let split_line: Vec<_> = line.trim().split(':').collect();
 
         match split_line[0].cmp(hash) {
-            std::cmp::Ordering::Equal => return Some(split_line[1].parse().unwrap()),
+            std::cmp::Ordering::Equal => return (split_line[0].to_owned(), split_line[1].parse().unwrap()),
             std::cmp::Ordering::Less => { },
             std::cmp::Ordering::Greater => break,
         }
 
-        reader.seek(SeekFrom::Current(step as i64)).unwrap();
+        reader.seek(SeekFrom::Current(step)).unwrap();
         reader.read_line(&mut line).unwrap();
         line.clear();
     }
@@ -43,7 +43,7 @@ fn jump_search<R: BufRead + Seek>(reader: &mut R, hash: &str) -> Option<usize> {
     // Found the segment where our hash may be, start looking for it linearly
     let stop_at = reader.stream_position().unwrap();
     // Start by backing up to the start of the segment, then read the maybe-partial line
-    reader.seek(SeekFrom::Current(0 - step as i64)).unwrap();
+    reader.seek(SeekFrom::Current(0 - step)).unwrap();
     reader.read_line(&mut line).unwrap();
     while reader.stream_position().unwrap() < stop_at {
         line.clear();
@@ -52,13 +52,13 @@ fn jump_search<R: BufRead + Seek>(reader: &mut R, hash: &str) -> Option<usize> {
         let split_line: Vec<_> = line.trim().split(':').collect();
 
         match split_line[0].cmp(hash) {
-            std::cmp::Ordering::Equal => return Some(split_line[1].parse().unwrap()),
+            std::cmp::Ordering::Equal => return (split_line[0].to_owned(), split_line[1].parse().unwrap()),
             std::cmp::Ordering::Less => { },
-            std::cmp::Ordering::Greater => break, // Overshot our target, means it's not here
+            std::cmp::Ordering::Greater => return (split_line[0].to_owned(), split_line[1].parse().unwrap()), // Overshot our target, means it's not here
         }
     }
 
-    None
+    unreachable!()
 }
 
 
@@ -109,10 +109,14 @@ fn main() {
             return Some((user, last_pwned));
         }
 
-        last_pwned = jump_search(&mut reader, user.password.as_str())?;
-        last_hash = user.password.clone();
-        pwned_users += 1;
-        Some((user, last_pwned))
+        (last_hash, last_pwned) = jump_search(&mut reader, user.password.as_str());
+
+        if user.password == last_hash {
+            pwned_users += 1;
+            Some((user, last_pwned))
+        } else {
+            None
+        }
     })
     {
         writeln!(&mut writer, "{}\t{}\t{}\t{}", user.rid, user.username, user.uac, pwned).expect("Failed to write to file");
