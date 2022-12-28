@@ -152,9 +152,9 @@ fn main() {
             pwned_users += 1;
             return Some((user, last_pwned));
         }
-        last_hash = user.password.clone();
 
         last_pwned = jump_search(&mut reader, user.password.as_str())?;
+        last_hash = user.password.clone();
         pwned_users += 1;
         Some((user, last_pwned))
     })
