@@ -16,7 +16,7 @@ struct User {
 fn jump_search<R: BufRead + Seek>(reader: &mut R, hash: &str) -> (String, usize) {
     let mut segment_start = reader.stream_position().unwrap();
     let n = reader.seek(SeekFrom::End(0)).unwrap();
-    let step = ((n as f32).sqrt() as u64).max(1) as i64;
+    let step = ((n as f32).sqrt() as i64).max(1);
 
     let mut line = String::new();
 
