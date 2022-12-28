@@ -113,19 +113,24 @@ fn main() {
     let hashreader = BufReader::new(hashes);
 
     let mut total_users = 0;
-    let mut users: Vec<_> = hashreader.lines().flat_map(|line| {
+    let mut users: Vec<_> = hashreader.lines().filter_map(|line| {
         let line = line.ok()?;
         let split: Vec<_> = line.split_whitespace().collect();
 
         total_users += 1;
-        
-        Some(User {
-            rid: split[0].parse().expect("Failed to parse RID: {line}"),
-            username: split[1].to_string(),
-            password: split[2].to_ascii_uppercase(),
-            uac: split[3].parse().expect("Failed to parse userAccountControl: {line}"),
-        })
-    }).filter(|user| user.is_active()).collect();
+
+        let uac = split[3].parse().expect("Failed to parse userAccountControl: {line}");
+        if uac & consts::UAC_ACCOUNT_DISABLE == 0 {
+            Some(User {
+                rid: split[0].parse().expect("Failed to parse RID: {line}"),
+                username: split[1].to_string(),
+                password: split[2].to_ascii_uppercase(),
+                uac,
+            })
+        } else {
+            None
+        }
+    }).collect();
     users.sort_unstable_by(|a, b| a.password.cmp(&b.password));
     let active_users = users.len();
 
