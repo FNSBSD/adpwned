@@ -14,13 +14,13 @@ struct User {
 ///
 /// Based on the algorithm described at https://www.geeksforgeeks.org/jump-search/
 fn jump_search<R: BufRead + Seek>(reader: &mut R, hash: &str) -> (String, usize) {
-    let start = reader.stream_position().unwrap();
+    let mut segment_start = reader.stream_position().unwrap();
     let n = reader.seek(SeekFrom::End(0)).unwrap();
     let step = ((n as f32).sqrt() as u64).max(1) as i64;
 
     let mut line = String::new();
 
-    reader.seek(SeekFrom::Start(start)).unwrap();
+    reader.seek(SeekFrom::Start(segment_start)).unwrap();
 
     loop {
         if reader.read_line(&mut line).unwrap() == 0 {
@@ -35,6 +35,7 @@ fn jump_search<R: BufRead + Seek>(reader: &mut R, hash: &str) -> (String, usize)
             std::cmp::Ordering::Greater => break,
         }
 
+        segment_start = reader.stream_position().unwrap();
         reader.seek(SeekFrom::Current(step)).unwrap();
         reader.read_line(&mut line).unwrap();
         line.clear();
@@ -42,9 +43,8 @@ fn jump_search<R: BufRead + Seek>(reader: &mut R, hash: &str) -> (String, usize)
 
     // Found the segment where our hash may be, start looking for it linearly
     let stop_at = reader.stream_position().unwrap();
-    // Start by backing up to the start of the segment, then read the maybe-partial line
-    reader.seek(SeekFrom::Current(0 - step)).unwrap();
-    reader.read_line(&mut line).unwrap();
+    // Start by backing up to the start of the segment
+    reader.seek(SeekFrom::Start(segment_start)).unwrap();
     while reader.stream_position().unwrap() < stop_at {
         line.clear();
         reader.read_line(&mut line).unwrap();
