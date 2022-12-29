@@ -2,7 +2,7 @@
 
 use clap::Parser;
 
-/// Check accounts for passwords known to have been breached
+/// Check Active Directory accounts for passwords known to have been breached
 /// 
 /// This tool is designed to check Active Directory accounts that have been dumped by Mimikatz
 /// against the NTLM hashes in the HaveIBeenPwned breached passwords file. It is suggested that

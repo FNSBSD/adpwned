@@ -1,8 +1,13 @@
 [package]
-name = "check_passwords"
-author = "Travis Veazey <travis.veazey@k12northstar.org>"
+name = "check_pwned"
+authors = ["Travis Veazey <travis.veazey@k12northstar.org>"]
+description = "Check Active Directory accounts for passwords known to have been breached"
 version = "0.1.0"
 edition = "2021"
+license = "MIT OR Apache-2.0"
+keywords = ["password", "haveibeenpwned", "security", "active-directory"]
+categories = ["command-line-utilities"]
+repository = "https://github.com/TravisVeazey/adpwned"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

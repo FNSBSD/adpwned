@@ -15,7 +15,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a20104e2335ce8a659d6dd92a51a767a0c062599c73b343fd152cb401e828c3d"
 
 [[package]]
-name = "check_passwords"
+name = "check_pwned"
 version = "0.1.0"
 dependencies = [
  "clap",
