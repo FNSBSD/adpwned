@@ -1,5 +1,5 @@
 [package]
-name = "check_pwned"
+name = "adpwned"
 authors = ["Travis Veazey <travis.veazey@k12northstar.org>"]
 description = "Check Active Directory accounts for passwords known to have been breached"
 version = "0.1.0"
