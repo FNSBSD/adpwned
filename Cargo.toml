@@ -2,7 +2,7 @@
 name = "adpwned"
 authors = ["Travis Veazey <travis.veazey@k12northstar.org>"]
 description = "Check Active Directory accounts for passwords known to have been breached"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 keywords = ["password", "haveibeenpwned", "security", "active-directory"]
