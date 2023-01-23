@@ -148,7 +148,7 @@ fn main() {
 
             let uac = split[3]
                 .parse()
-                .expect("Failed to parse userAccountControl: {line}");
+                .expect(&format!("Failed to parse userAccountControl: {line}"));
             // Ensure account is active, then build an `Account` object from it
             if uac & consts::UAC_ACCOUNT_DISABLE == 0 {
                 Some(Account {
