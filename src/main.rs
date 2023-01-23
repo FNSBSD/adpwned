@@ -2,6 +2,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Seek, SeekFrom, Write};
 
 use clap::Parser;
+use encoding_rs_io::DecodeReaderBytes;
 
 mod consts;
 mod cli;
@@ -125,7 +126,7 @@ fn main() {
     // RID  AccountName    HashedPassword  userAccountControl
     // This matches the output of Mimikatz's `dcsync` with the `/csv` option
     let accounts_file = File::open(args.accounts).expect("Unable to open hashes file");
-    let accounts_reader = BufReader::new(accounts_file);
+    let accounts_reader = BufReader::new(DecodeReaderBytes::new(accounts_file));
 
     // Pwned passwords file, containing lines in the format `<hash>:<count>`
     let passwords_file = File::open(args.passwords)

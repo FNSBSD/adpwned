@@ -13,3 +13,5 @@ repository = "https://github.com/TravisVeazey/adpwned"
 
 [dependencies]
 clap = { version = "4.0", features = ["derive"] }
+encoding_rs_io = "0.1"
+
