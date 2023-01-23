@@ -8,11 +8,10 @@ Check AD passwords against known compromised passwords.
 
 You first need to dump your Active Directory accounts using Mimikatz; this will require special rights,
 such as an account that is a member of Administrators, Domain Admins, or Enterprise Admins, as well as
-Domain Controller computer accounts. Run Mimikatz under that context, and then run the following commands:
+Domain Controller computer accounts. Run PowerShell under that context, and then run the following:
 
-```
-$ log hashes.txt
-$ lsadump::dcsync /domain:ad.localdomain /all /csv
+```powershell
+PS C:\temp\mimikatz> .\mimikatz "lsadump::dcsync /domain:ad.localdomain /all /csv" exit > hashes.txt
 ```
 
 Note that if you are running this from a workstation joined to the domain you're dumping accounts from,
